@@ -8,9 +8,9 @@ import (
 	"go.uber.org/zap/zapcore"
 	"os"
 
-	"github.com/XANi/go-artemix/demo"
 	"github.com/XANi/go-artemix/platform"
 	"github.com/XANi/go-artemix/renderer"
+	"github.com/XANi/go-artemix/ui"
 )
 
 var version string
@@ -97,7 +97,7 @@ func main() {
 		}
 		defer renderer.Dispose()
 
-		demo.Run(platform, renderer)
+		ui.Run(platform, renderer)
 
 		return nil
 	}
