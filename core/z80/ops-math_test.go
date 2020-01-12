@@ -9,29 +9,7 @@ import (
 
 func TestInc(t *testing.T) {
 	cpu := InitCPU()
-	var inctest16 = []struct {
-		Name string
-		Func     func([]byte)
-		Register *[2]byte
-	}{
-		{ Name: "INC BC", Func: cpu.IINC_BC, Register: &cpu.BC },
-		{ Name: "INC DE", Func: cpu.IINC_DE, Register: &cpu.DE },
-		{ Name: "INC HL", Func: cpu.IINC_HL, Register: &cpu.HL },
-		{ Name: "INC SP", Func: cpu.IINC_SP, Register: &cpu.SP },
-	}
-	for _, td := range  inctest16 {
-		t.Run(td.Name, func(t *testing.T) {
-			(*td.Register) = [2]byte{0, 0}
-			td.Func([]byte{})
-			assert.Equal(t, uint16(1), binary.BigEndian.Uint16((*td.Register)[:]))
-			(*td.Register) = [2]byte{0, 0xff}
-			td.Func([]byte{})
-			assert.Equal(t, uint16(256), binary.BigEndian.Uint16((*td.Register)[:]))
-			(*td.Register) = [2]byte{0xff, 0xff}
-			td.Func([]byte{})
-			assert.Equal(t, uint16(0), binary.BigEndian.Uint16((*td.Register)[:]))
-		})
-	}
+
 	var inctest8 =  []struct {
 		Name string
 		Func     func([]byte)
@@ -69,6 +47,28 @@ func TestInc(t *testing.T) {
 			assert.Equal(t, uint8(0), (*td.Register)[td.Byte])
 			assertMathFlags8(t,cpu,0xFF,(*td.Register)[td.Byte])
 			// TODO check half-carry
+		})
+	}
+	var inctest16 = []struct {
+		Name string
+		Func     func([]byte)
+		Register *[2]byte
+	}{
+		{ Name: "INC BC", Func: cpu.IINC_BC, Register: &cpu.BC },
+		{ Name: "INC DE", Func: cpu.IINC_DE, Register: &cpu.DE },
+		{ Name: "INC HL", Func: cpu.IINC_HL, Register: &cpu.HL },
+		{ Name: "INC SP", Func: cpu.IINC_SP, Register: &cpu.SP },
+	}
+	for _, td := range  inctest16 {
+		t.Run(td.Name, func(t *testing.T) {
+			td.Func([]byte{})
+			assert.Equal(t, uint16(1), binary.BigEndian.Uint16((*td.Register)[:]))
+			binary.BigEndian.PutUint16((*td.Register)[:],255)
+			td.Func([]byte{})
+			assert.Equal(t, uint16(256), binary.BigEndian.Uint16((*td.Register)[:]))
+			(*td.Register) = [2]byte{0xff, 0xff}
+			td.Func([]byte{})
+			assert.Equal(t, uint16(0), binary.BigEndian.Uint16((*td.Register)[:]))
 		})
 	}
 }
@@ -118,9 +118,78 @@ var dectest8 =  []struct {
 			td.Func([]byte{})
 			assert.Equal(t, uint8(127), (*td.Register)[td.Byte], "DEC -128 -> 127")
 			assertMathFlags8(t,cpu,0x80,(*td.Register)[td.Byte])
+		})
+	}
+	var inctest16 = []struct {
+		Name string
+		Func     func([]byte)
+		Register *[2]byte
+	}{
+		{ Name: "DEC BC", Func: cpu.IDEC_BC, Register: &cpu.BC },
+		{ Name: "DEC DE", Func: cpu.IDEC_DE, Register: &cpu.DE },
+		{ Name: "DEC HL", Func: cpu.IDEC_HL, Register: &cpu.HL },
+		{ Name: "DEC SP", Func: cpu.IDEC_SP, Register: &cpu.SP },
+	}
+	for _, td := range  inctest16 {
+		t.Run(td.Name, func(t *testing.T) {
+			(*td.Register) = [2]byte{0, 0x01}
+			td.Func([]byte{})
+			assert.Equal(t, uint16(0), binary.BigEndian.Uint16((*td.Register)[:]))
+			(*td.Register) = [2]byte{0, 0x00}
+			td.Func([]byte{})
+			assert.Equal(t, uint16(65535), binary.BigEndian.Uint16((*td.Register)[:]))
+		})
+	}
+}
+
+func TestAdd(t *testing.T) {
+	cpu := InitCPU()
+	var addtest8 = []struct {
+		Name     string
+		Func     func([]byte)
+		Register *[2]byte
+		Byte     int
+	}{}
+	_ = addtest8
+
+	var test16 = []struct {
+		Name     string
+		Func     func([]byte)
+		Register *[2]byte
+		Byte     int
+	}{
+		{ Name: "DEC BC", Func: cpu.IADD_HL_BC, Register: &cpu.BC },
+		{ Name: "DEC DE", Func: cpu.IADD_HL_DE, Register: &cpu.DE },
+		{ Name: "DEC HL", Func: cpu.IADD_HL_HL, Register: &cpu.HL },
+		{ Name: "DEC SP", Func: cpu.IADD_HL_SP, Register: &cpu.SP },
+	}
+	// TODO test half carry
+
+	for _, td := range  test16 {
+		t.Run(td.Name, func(t *testing.T) {
+			binary.BigEndian.PutUint16((cpu.HL)[:],255)
+			binary.BigEndian.PutUint16((*td.Register)[:],255)
+			cpu.SetF_C(true)
+			cpu.SetF_PV(true)
+			td.Func([]byte{})
+			assert.Equal(t,255*2,int(binary.BigEndian.Uint16(cpu.HL[:])))
+			assert.Equal(t,false,cpu.GetF_C(),"C(arry) flag true")
+			assert.Equal(t,false,cpu.GetF_PV(),"PV flag true")
+
+			binary.BigEndian.PutUint16((cpu.HL)[:],(1 << 15))
+			binary.BigEndian.PutUint16((*td.Register)[:],(1 << 15))
+			td.Func([]byte{})
+			assert.Equal(t,0,int(binary.BigEndian.Uint16(cpu.HL[:])))
+			assert.Equal(t,true,cpu.GetF_C(),"C(arry) flag true")
+			assert.Equal(t,false,cpu.GetF_PV(),"PV flag true")
 
 
-
+			cpu.HL=[2]byte{0xFF,0xFF}
+			(*td.Register) = [2]byte{0xFF,0xFF}
+			td.Func([]byte{})
+			assert.Equal(t,65534,int(binary.BigEndian.Uint16(cpu.HL[:])))
+			assert.Equal(t,true,cpu.GetF_C(),"C(arry) flag true")
+			assert.Equal(t,false,cpu.GetF_PV(),"PV flag true")
 		})
 	}
 }
