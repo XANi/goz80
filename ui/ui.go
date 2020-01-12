@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/inkyblackness/imgui-go/v2"
+
+	"github.com/XANi/goz80/core/z80"
 )
 
 // Platform covers mouse/keyboard/gamepad inputs, cursor shape, timing, windowing.
@@ -58,8 +60,25 @@ func Run(p Platform, r Renderer) {
 	showDemoWindow := false
 	clearColor := [4]float32{0.0, 0.0, 0.0, 1.0}
 	showPerfbox := false
+	runZ80 := false
+	stepsPerCycle:=int32(1)
 	start := int32(0)
+	cpu := z80.InitCPU()
+	prog := []byte{
+		0x0e,0x0b,
+		0x06,0x01,
+		0x3c,
+		0x3c,
+		0x0c,
+		0x0c,
+		0x0c,
+		0x02,
+		0xa9,
+		0xC3,0x00,0x04}
+
+	copy(cpu.Data[:],prog)
 	for !p.ShouldStop() {
+		s := time.Now()
 		perfboxFrameStart()
 		p.ProcessEvents()
 		// Signal start of a new frame
@@ -80,8 +99,20 @@ func Run(p Platform, r Renderer) {
 
 			imgui.Checkbox("Demo Window", &showDemoWindow) // Edit bools storing our window open/close state
 			imgui.Checkbox("Perfbox", &showPerfbox)
+			imgui.Checkbox("Run Z80", &runZ80)
+			if runZ80 {
+				cpu.Step()
+			}
+
+
 			imgui.SliderIntV("start", &start, 0, int32(len(buffer)),"%d")
-			Hexview(&buffer,9,int(start),300)
+			imgui.SliderIntV("steps/frame", &stepsPerCycle,1,655350,"%d")
+			if runZ80 {
+				for i :=int32(0) ; i <=stepsPerCycle; i++ {
+					cpu.Step()
+				}
+			}
+			Hexview(&cpu.Data,16,int(start),512)
 
 			imgui.End()
 		}
@@ -97,10 +128,15 @@ func Run(p Platform, r Renderer) {
 		// app.RenderScene()
 
 		r.Render(p.DisplaySize(), p.FramebufferSize(), imgui.RenderedDrawData())
-		p.PostRender()
 		perfboxFrameStop()
-		// sleep to avoid 100% CPU usage for this demo
-		<-time.After(time.Millisecond * 2)
+		ft := time.Since(s)
+		p.PostRender()
+		//// sleep to avoid 100% CPU usage for this demo
+		if ft > time.Millisecond * 16 {
+			fmt.Printf("frame time exceeded: %s\n", time.Since(s))
+		} else {
+			<-time.After((time.Millisecond * 16) - ft)
+		}
 	}
 }
 

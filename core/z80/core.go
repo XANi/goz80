@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-var memSize =65536
+var memSize = 65536
 
 type CPU struct {
 	AF [2]byte
@@ -75,13 +75,26 @@ func (c *CPU) InitializeInstructionDecoder() {
 		{I: 0x3e, F: c.ILD_A_const,S: 2},
 		// ...
 		{I: 0xc3,F: c.IJPXX,S:3},
+		// ..
+		{I: 0xa8,F: c.IXOR_B,S:1},
+		{I: 0xa9,F: c.IXOR_C,S:1},
 	}
 	for _, op := range funcmap {
 		if c.id[op.I] != nil {
 			panic(fmt.Sprintf("duplicate for function %d", op.I))
 		}
+		if op.S < 1 {
+			panic(fmt.Sprintf("size cant be zero for op %d", op.I))
+		}
 		c.id[op.I] = op.F
 		c.is[op.I] = op.S
+	}
+	for i, op := range c.id {
+		if op == nil {
+			c.id[i] = c.INOP
+			c.is[i] = 1
+			fmt.Printf("filling %02x with NOP\n", i)
+		}
 	}
 }
 
@@ -91,7 +104,7 @@ func (c *CPU) Step() {
 	c.opLen = c.is[ c.opId ]
 	c.op = c.id[c.opId]
 	binary.BigEndian.PutUint16(c.PC[:],c.pc + uint16(c.opLen))
-	c.op(c.Data[c.pc + 1:c.pc + uint16(c.opLen)])
+	c.op(c.Data[(c.pc + 1):(c.pc + uint16(c.opLen))])
 
 }
 func (c *CPU) State() string {

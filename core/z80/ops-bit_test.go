@@ -31,3 +31,12 @@ func TestRRCA (t *testing.T) {
 	assert.Equal(t,uint8(0x40),cpu.AF[0],"%#08b -> %#08b",0x80,0x40)
 	assert.Equal(t,false,cpu.GetF_C(),"carry true")
 }
+
+func TextXOR(t *testing.T) {
+	cpu := InitCPU()
+	cpu.AF[0] = 0xa0
+	cpu.BC[0] = 0x2e
+	cpu.IXOR_B([]byte{})
+	assert.Equal(t,0xc3,cpu.AF[0])
+
+}
