@@ -51,22 +51,36 @@ func TestInc(t *testing.T) {
 			*td.Register = [2]byte{0, 0}
 			td.Func([]byte{})
 			assert.Equal(t, uint8(1), (*td.Register)[td.Byte])
-			assert.Equal(t, false, cpu.GetF_PV(), "PV bit")
-			assert.Equal(t, false, cpu.GetF_S(), "S bit")
+			assertMathFlags8(t,cpu,0,(*td.Register)[td.Byte])
 
-			(*td.Register)[td.Byte] = 0x7e
+
+			(*td.Register)[td.Byte] = 0x7E
 			td.Func([]byte{})
 			assert.Equal(t, uint8(127), (*td.Register)[td.Byte])
-			assert.Equal(t, false, cpu.GetF_PV(), "PV bit")
-			assert.Equal(t, false, cpu.GetF_S(), "S bit")
+			assertMathFlags8(t,cpu,0x7E,(*td.Register)[td.Byte])
 
-			(*td.Register)[td.Byte] = 0x7f
+			(*td.Register)[td.Byte] = 0x7F
 			td.Func([]byte{})
 			assert.Equal(t, uint8(128), (*td.Register)[td.Byte])
-			assert.Equal(t, true, cpu.GetF_PV(), "PV bit")
-			assert.Equal(t, true, cpu.GetF_S(), "S bit")
+			assertMathFlags8(t,cpu,0x7F,(*td.Register)[td.Byte])
+
+			(*td.Register)[td.Byte] = 0xFF
+			td.Func([]byte{})
+			assert.Equal(t, uint8(0), (*td.Register)[td.Byte])
+			assertMathFlags8(t,cpu,0xFF,(*td.Register)[td.Byte])
 			// TODO check half-carry
 		})
+	}
+}
+
+func assertMathFlags8 (t *testing.T, cpu *CPU, in byte, out byte) {
+	assert.Equal(t, int8(out) < 0, cpu.GetF_S(), "(S)ign flag")
+	assert.Equal(t, out == 0, cpu.GetF_Z(), "(Z)ero flag")
+	if in == 0x7f && out >  0x7f ||
+		in == 0x80 && out < 0x80 {
+		assert.Equal(t, true, cpu.GetF_PV(), "PV flag true: %#02x(%d) -> %#02x(%d)", in,int8(in), out,int8(out))
+	} else {
+		assert.Equal(t, false, cpu.GetF_PV(),"PV flag false: %#02x -> %#02x", in, out)
 	}
 }
 
@@ -92,12 +106,19 @@ var dectest8 =  []struct {
 			(*td.Register)[td.Byte] = 1
 			cpu.SetF_Z(false)
 			td.Func([]byte{})
-			assert.Equal(t, uint8(0), (*td.Register)[td.Byte])
-			assert.Equal(t,true,cpu.GetF_Z(), "Z flag true")
+			assert.Equal(t, uint8(0), (*td.Register)[td.Byte],"DEC 1 -> 0")
+			assertMathFlags8(t,cpu,0x01,(*td.Register)[td.Byte])
+
+			(*td.Register)[td.Byte] = 0
 			td.Func([]byte{})
-			assert.Equal(t, uint8(255), (*td.Register)[td.Byte])
-			assert.Equal(t,false,cpu.GetF_Z(), "Z flag false")
-			assert.Equal(t,true,cpu.GetF_S(), "S flag true")
+			assert.Equal(t, uint8(255), (*td.Register)[td.Byte], "DEC 0 -> -1")
+			assertMathFlags8(t,cpu,0x00,(*td.Register)[td.Byte])
+
+			(*td.Register)[td.Byte] = 0x80
+			td.Func([]byte{})
+			assert.Equal(t, uint8(127), (*td.Register)[td.Byte], "DEC -128 -> 127")
+			assertMathFlags8(t,cpu,0x80,(*td.Register)[td.Byte])
+
 
 
 		})
