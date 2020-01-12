@@ -2,7 +2,6 @@ package z80
 
 import (
 	"encoding/binary"
-	"fmt"
 )
 
 func (c *CPU) IINC_BC (p []byte) {
@@ -79,9 +78,9 @@ func (c *CPU) IINC_L (p []byte) {
 	c.SetF_S( (c.HL[1] & (1 << 7)) != 0 )
 	c.SetF_Z(c.HL[1]==0)
 }
-func (c *CPU) IINC_PHL (p []byte) {
-	panic("op not implemented")
-}
+//func (c *CPU) IINC_PHL (p []byte) {
+//	panic("op not implemented")
+//}
 
 func (c *CPU) IDEC_BC (p []byte) {
 	c.BC[1]--
@@ -167,7 +166,6 @@ func (c *CPU) IADD_HL_BC(p []byte) {
    	sum := uint16(sum32)
    	carryOut := uint16(sum32 >> 16)
    	binary.BigEndian.PutUint16(c.HL[:],sum)
-	fmt.Printf("%d %016b\n",x, carryOut)
 	c.SetF_C(carryOut > 0)
    	c.SetF_PV(carryOut > 1)
    	c.SetF_H( (((c.HL[0] & 0xf) + (1& 0xf)) & 0x10) == 0x10 )

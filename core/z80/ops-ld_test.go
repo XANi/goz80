@@ -1,6 +1,7 @@
 package z80
 
 import (
+	"encoding/binary"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -9,18 +10,48 @@ import (
 
 func TestLD (t *testing.T) {
 	cpu := InitCPU()
-	cpu.BC[1]=3
-	cpu.DE[1]=4
-	cpu.AF=[2]byte{0x10,0x12}
-	t.Run("LD (BC),a", func(t *testing.T) {
-		cpu.ILD_PBC_A([]byte{})
-		assert.Equal(t, uint8(0x10), cpu.Data[3])
-	})
-	t.Run("LD (DE),a", func(t *testing.T) {
-		cpu.ILD_PDE_A([]byte{})
-		assert.Equal(t, uint8(0x10), cpu.Data[4])
-	})
+	var tests = []struct {
+		Name string
+		Func     func([]byte)
+		Register *[2]byte
+	}{
+		{Name: "LD BC, **", Func: cpu.ILD_BC, Register: &cpu.BC },
+		{Name: "LD DE, **", Func: cpu.ILD_DE, Register: &cpu.DE },
+		{Name: "LD HL, **", Func: cpu.ILD_HL, Register: &cpu.HL },
+		{Name: "LD SP, **", Func: cpu.ILD_SP, Register: &cpu.SP },
+	}
+	for id, td := range  tests {
+		t.Run(td.Name, func(t *testing.T) {
+			binary.LittleEndian.PutUint16(cpu.Data[123:125],uint16(id+1))
+			addr := make([]byte, 2)
+			binary.BigEndian.PutUint16(addr, 123)
+			td.Func(addr)
+			assert.Equal(t, id+1, int(binary.BigEndian.Uint16((*td.Register)[:])))
+		})
+	}
 }
+
+func TestLD_P_A (t *testing.T) {
+	cpu := InitCPU()
+	var tests = []struct {
+		Name string
+		Func     func([]byte)
+		Register *[2]byte
+		RegIdx int
+	}{
+		{Name: "LD (BC), A", Func: cpu.ILD_PBC_A, Register: &cpu.BC,RegIdx: 0},
+		{Name: "LD (DE), A", Func: cpu.ILD_PDE_A, Register: &cpu.DE,RegIdx: 0},
+	}
+	for id, td := range  tests {
+		t.Run(td.Name, func(t *testing.T) {
+			cpu.AF[0]= uint8(id+1)
+			binary.BigEndian.PutUint16((*td.Register)[:],555)
+			td.Func([]byte{})
+			assert.Equal(t,uint8(id + 1),cpu.Data[555])
+		})
+	}
+}
+
 
 func TestLD_A_PTR(t *testing.T) {
 	cpu := InitCPU()

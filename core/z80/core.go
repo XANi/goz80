@@ -92,8 +92,10 @@ func (c *CPU) Step() {
 	c.op = c.id[c.opId]
 	binary.BigEndian.PutUint16(c.PC[:],c.pc + uint16(c.opLen))
 	c.op(c.Data[c.pc + 1:c.pc + uint16(c.opLen)])
-	fmt.Printf("PC: %d, opid %02x size: %d \n",c.pc,c.opId,c.opLen)
 
+}
+func (c *CPU) State() string {
+	return fmt.Sprintf("PC: %d, opid %02x size: %d \n",c.pc,c.opId,c.opLen)
 }
 
 

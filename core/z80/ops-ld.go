@@ -1,23 +1,29 @@
 package z80
 
-import "encoding/binary"
+import (
+	"encoding/binary"
+)
 
 
 func (c *CPU) ILD_BC (p []byte) {
 	addr := binary.BigEndian.Uint16(p[0:2])
-	copy(c.BC[:],c.Data[addr:addr+2])
+	c.BC[1] = c.Data[addr]
+	c.BC[0] = c.Data[addr+1]
 }
 func (c *CPU) ILD_DE (p []byte) {
 	addr := binary.BigEndian.Uint16(p[0:2])
-	copy(c.BC[:],c.Data[addr:addr+2])
+	c.DE[1] = c.Data[addr]
+	c.DE[0] = c.Data[addr+1]
 }
 func (c *CPU) ILD_HL (p []byte) {
 	addr := binary.BigEndian.Uint16(p[0:2])
-	copy(c.BC[:],c.Data[addr:addr+2])
+	c.HL[1] = c.Data[addr]
+	c.HL[0] = c.Data[addr+1]
 }
 func (c *CPU) ILD_SP (p []byte) {
 	addr := binary.BigEndian.Uint16(p[0:2])
-	copy(c.BC[:],c.Data[addr:addr+2])
+	c.SP[1] = c.Data[addr]
+	c.SP[0] = c.Data[addr+1]
 }
 
 // register to pointer register addr

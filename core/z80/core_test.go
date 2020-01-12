@@ -100,9 +100,25 @@ func TestProg(t *testing.T) {
 		0xC3,0x00,0x00}
 
 	copy(cpu.Data[:],prog)
+	assert.Contains(t,cpu.State(),"PC: 0")
 	for i :=0 ; i <= 9; i++ {
 		cpu.Step()
 	}
 	assert.Equal(t,4,int(cpu.AF[0]))
 	assert.Equal(t,4,int(cpu.Data[0x0B]))
+}
+func BenchmarkProg(b *testing.B) {
+	cpu := InitCPU()
+	prog := []byte{
+		0x0e,0x0b,
+		0x3c,
+		0x3c,
+		0x02,
+		0xC3,0x00,0x00}
+
+	copy(cpu.Data[:],prog)
+	for n := 0; n < b.N; n++ {
+		cpu.Step()
+	}
+
 }
