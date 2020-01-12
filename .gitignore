@@ -37,6 +37,7 @@ imgui.ini
 _cgo_defun.c
 _cgo_gotypes.go
 _cgo_export.*
+goz80
 
 *.exe
 *.test

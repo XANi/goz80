@@ -29,7 +29,13 @@ func init() {
 	}
 }
 
-func Hexview(buffer *[]byte, columns int) {
+func Hexview(buffer *[]byte, columns int,start int, window int) {
+	if window <= columns * 4 {
+		window = columns * 4
+	}
+	if start >len(*buffer) - window {
+		start = len(*buffer) - window
+	}
 	imgui.Text(fmt.Sprintf("%d",hoverIdx))
 
 	imgui.ColumnsV(columns+1,"hex",true)
@@ -51,7 +57,7 @@ func Hexview(buffer *[]byte, columns int) {
 	imgui.PopStyleColor()
 	//imgui.Separator()
 	resetHover := true
-	for idx, b := range *buffer{
+	for idx, b := range (*buffer)[start:start+window]{
 		if imgui.ColumnIndex() == 0 {
 			imgui.PushStyleColor(imgui.StyleColorText,imgui.Vec4{
 				X: 0.6,
@@ -59,7 +65,7 @@ func Hexview(buffer *[]byte, columns int) {
 				Z: 0.4,
 				W: 1,
 			})
-			imgui.Text(fmt.Sprintf("%04X", idx))
+			imgui.Text(fmt.Sprintf("%04X", idx+start))
 
 			imgui.NextColumn()
 			imgui.PopStyleColor()

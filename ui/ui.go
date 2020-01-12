@@ -52,12 +52,13 @@ type Renderer interface {
 // This demo application shows some basic features of ImGui, as well as exposing the standard demo window.
 func Run(p Platform, r Renderer) {
 	imgui.CurrentIO().SetClipboard(clipboard{platform: p})
-	buffer := make([]byte,514)
+	buffer := make([]byte,65535)
 	rand.Read(buffer)
 
 	showDemoWindow := false
 	clearColor := [4]float32{0.0, 0.0, 0.0, 1.0}
 	showPerfbox := false
+	start := int32(0)
 	for !p.ShouldStop() {
 		perfboxFrameStart()
 		p.ProcessEvents()
@@ -79,8 +80,8 @@ func Run(p Platform, r Renderer) {
 
 			imgui.Checkbox("Demo Window", &showDemoWindow) // Edit bools storing our window open/close state
 			imgui.Checkbox("Perfbox", &showPerfbox)
-
-			Hexview(&buffer,9)
+			imgui.SliderIntV("start", &start, 0, int32(len(buffer)),"%d")
+			Hexview(&buffer,9,int(start),300)
 
 			imgui.End()
 		}
@@ -99,7 +100,7 @@ func Run(p Platform, r Renderer) {
 		p.PostRender()
 		perfboxFrameStop()
 		// sleep to avoid 100% CPU usage for this demo
-		<-time.After(time.Millisecond * 25)
+		<-time.After(time.Millisecond * 2)
 	}
 }
 

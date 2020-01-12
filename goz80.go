@@ -8,9 +8,9 @@ import (
 	"go.uber.org/zap/zapcore"
 	"os"
 
-	"github.com/XANi/go-artemix/platform"
-	"github.com/XANi/go-artemix/renderer"
-	"github.com/XANi/go-artemix/ui"
+	"github.com/XANi/goz80/platform"
+	"github.com/XANi/goz80/renderer"
+	"github.com/XANi/goz80/ui"
 )
 
 var version string
