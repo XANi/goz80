@@ -51,6 +51,15 @@ func TestInc(t *testing.T) {
 			*td.Register = [2]byte{0, 0}
 			td.Func([]byte{})
 			assert.Equal(t, uint8(1), (*td.Register)[td.Byte])
+			assert.Equal(t, false, cpu.GetF_PV(), "PV bit")
+			assert.Equal(t, false, cpu.GetF_S(), "S bit")
+
+			(*td.Register)[td.Byte] = 0x7e
+			td.Func([]byte{})
+			assert.Equal(t, uint8(127), (*td.Register)[td.Byte])
+			assert.Equal(t, false, cpu.GetF_PV(), "PV bit")
+			assert.Equal(t, false, cpu.GetF_S(), "S bit")
+
 			(*td.Register)[td.Byte] = 0x7f
 			td.Func([]byte{})
 			assert.Equal(t, uint8(128), (*td.Register)[td.Byte])
