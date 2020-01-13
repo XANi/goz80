@@ -50,6 +50,22 @@ type Renderer interface {
 	Render(displaySize [2]float32, framebufferSize [2]float32, drawData imgui.DrawData)
 }
 
+
+
+var mt time.Time
+var mtIntervals = make(map[string]time.Duration,0)
+var mtIntervalsOrder = make([]string,0)
+
+func measureInterval(name string) {
+	if _, ok := mtIntervals[name]; !ok {
+		mtIntervalsOrder = append(mtIntervalsOrder,name)
+	}
+
+	mtIntervals[name]=time.Since(mt)
+	mt = time.Now()
+
+}
+
 // Run implements the main program loop of the demo. It returns when the platform signals to stop.
 // This demo application shows some basic features of ImGui, as well as exposing the standard demo window.
 func Run(p Platform, r Renderer) {
@@ -77,20 +93,25 @@ func Run(p Platform, r Renderer) {
 		0xC3,0x00,0x04}
 
 	copy(cpu.Data[:],prog)
+	measureInterval("start")
+	frame := 0
 	for !p.ShouldStop() {
+		measureInterval("init")
+		frame++
 		s := time.Now()
-		perfboxFrameStart()
+
 		p.ProcessEvents()
+		perfboxFrameStart()
 		// Signal start of a new frame
 		p.NewFrame()
 		imgui.NewFrame()
-
+		measureInterval("frame-start")
 		// 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()!
 		// You can browse its code to learn more about Dear ImGui!).
 		if showDemoWindow {
 			imgui.ShowDemoWindow(&showDemoWindow)
 		}
-
+		measureInterval("demo-window")
 		// 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
 		{
 			imgui.Begin("Hello, world!") // Create a window called "Hello, world!" and append into it.
@@ -100,11 +121,6 @@ func Run(p Platform, r Renderer) {
 			imgui.Checkbox("Demo Window", &showDemoWindow) // Edit bools storing our window open/close state
 			imgui.Checkbox("Perfbox", &showPerfbox)
 			imgui.Checkbox("Run Z80", &runZ80)
-			if runZ80 {
-				cpu.Step()
-			}
-
-
 			imgui.SliderIntV("start", &start, 0, int32(len(buffer)),"%d")
 			imgui.SliderIntV("steps/frame", &stepsPerCycle,1,655350,"%d")
 			if runZ80 {
@@ -112,30 +128,45 @@ func Run(p Platform, r Renderer) {
 					cpu.Step()
 				}
 			}
+
 			Hexview(&cpu.Data,16,int(start),512)
 
 			imgui.End()
 		}
+		measureInterval("Hexview")
+
 		if showPerfbox {
 			Perfbox(&showPerfbox)
 		}
-
+		measureInterval("perfbox")
 		// Rendering
 		imgui.Render() // This call only creates the draw data list. Actual rendering to framebuffer is done below.
+		measureInterval("imgui-render")
+		perfboxFrameStop()
 
 		r.PreRender(clearColor)
+		measureInterval("pre-render")
 		// A this point, the application could perform its own rendering...
 		// app.RenderScene()
 
 		r.Render(p.DisplaySize(), p.FramebufferSize(), imgui.RenderedDrawData())
-		perfboxFrameStop()
-		ft := time.Since(s)
+		measureInterval("render")
+
 		p.PostRender()
-		//// sleep to avoid 100% CPU usage for this demo
-		if ft > time.Millisecond * 16 {
-			fmt.Printf("frame time exceeded: %s\n", time.Since(s))
-		} else {
+		measureInterval("post-render")
+		ft := time.Since(s)
+
+		if ft > time.Millisecond * 20 {
+			fmt.Printf("frame time exceeded: %s\n", ft)
+		} else if ft < time.Millisecond * 10 {
+			//// sleep to avoid 100% CPU usage if frame is fast
 			<-time.After((time.Millisecond * 16) - ft)
+		}
+		if (frame % 60 ) == 30 {
+			fmt.Println("-- timing --\n")
+			for _, step := range mtIntervalsOrder[1:] {
+				fmt.Printf("%s:\t%s\n",step, mtIntervals[step])
+			}
 		}
 	}
 }

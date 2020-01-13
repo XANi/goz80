@@ -41,7 +41,11 @@ func NewSDL(io imgui.IO, clientAPI SDLClientAPI) (*SDL, error) {
 		return nil, fmt.Errorf("failed to initialize SDL2: %v", err)
 	}
 
-	window, err := sdl.CreateWindow("ImGui-Go SDL2+"+string(clientAPI)+" example", sdl.WINDOWPOS_CENTERED, sdl.WINDOWPOS_CENTERED, displayMode.W-80,displayMode.H-80, sdl.WINDOW_OPENGL)
+	window, err := sdl.CreateWindow("ImGui-Go SDL2+"+string(clientAPI)+" example",
+		sdl.WINDOWPOS_CENTERED,
+		sdl.WINDOWPOS_CENTERED,
+		displayMode.W-80,displayMode.H-80,
+		sdl.WINDOW_OPENGL)
 	if err != nil {
 		sdl.Quit()
 		return nil, fmt.Errorf("failed to create window: %v", err)
