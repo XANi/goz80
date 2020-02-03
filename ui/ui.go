@@ -121,19 +121,22 @@ func Run(p Platform, r Renderer) {
 			imgui.Checkbox("Demo Window", &showDemoWindow) // Edit bools storing our window open/close state
 			imgui.Checkbox("Perfbox", &showPerfbox)
 			imgui.Checkbox("Run Z80", &runZ80)
-			imgui.SliderIntV("start", &start, 0, int32(len(buffer)),"%d")
 			imgui.SliderIntV("steps/frame", &stepsPerCycle,1,655350,"%d")
-			if runZ80 {
-				for i :=int32(0) ; i <=stepsPerCycle; i++ {
-					cpu.Step()
-				}
-			}
 
+
+			imgui.SliderIntV("start", &start, 0, int32(len(buffer)),"%d")
 			Hexview(&cpu.Data,16,int(start),512)
 
 			imgui.End()
 		}
 		measureInterval("Hexview")
+		if runZ80 {
+				for i :=int32(0) ; i <=stepsPerCycle; i++ {
+					cpu.Step()
+				}
+		}
+		measureInterval("z80")
+
 
 		if showPerfbox {
 			Perfbox(&showPerfbox)

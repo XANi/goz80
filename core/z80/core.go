@@ -36,6 +36,7 @@ type CPU struct {
 	id [256]func(param []byte)()
 	// instruction size map
 	is [256]uint8
+	OpsCtr uint64
 }
 
 
@@ -105,6 +106,7 @@ func (c *CPU) Step() {
 	c.op = c.id[c.opId]
 	binary.BigEndian.PutUint16(c.PC[:],c.pc + uint16(c.opLen))
 	c.op(c.Data[(c.pc + 1):(c.pc + uint16(c.opLen))])
+	c.OpsCtr++
 
 }
 func (c *CPU) State() string {

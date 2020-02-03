@@ -8,9 +8,9 @@ import (
 	"github.com/lucasb-eyer/go-colorful"
 )
 
-var pallete []imgui.Vec4
+var palette []imgui.Vec4
 var hoverIdx = -1;
-//var pallete = colorful.FastWarmPalette(256)
+//var palette = colorful.FastWarmPalette(256)
 func init() {
 	p := colorful.FastWarmPalette(256)
 	p[0]=colorful.Color{R:0.4, G:0.4, B: 0.4}
@@ -19,13 +19,13 @@ func init() {
 	p=append(p,colorful.Color{R:0.6, G:1, B: 0.6})
 	p=append(p,colorful.Color{R:1, G:0.6, B: 1})
 	p=append(p,colorful.Color{R:1, G:1, B: 1})
-	pallete = make([]imgui.Vec4,len(p))
+	palette = make([]imgui.Vec4,len(p))
 
 	for idx, c := range p {
-		pallete[idx].X = float32(c.R)
-		pallete[idx].Y = float32(c.G)
-		pallete[idx].Z = float32(c.B)
-		pallete[idx].W = 1
+		palette[idx].X = float32(c.R)
+		palette[idx].Y = float32(c.G)
+		palette[idx].Z = float32(c.B)
+		palette[idx].W = 1
 	}
 }
 
@@ -75,9 +75,9 @@ func Hexview(buffer *[]byte, columns int,start int, window int) {
 		blockEnd := hoverIdx
 
 		if  idx >= blockStart && idx <= blockEnd  {
-			imgui.PushStyleColor(imgui.StyleColorText, pallete[256 + idx-blockStart])
+			imgui.PushStyleColor(imgui.StyleColorText, palette[256 + idx-blockStart])
 		} else {
-			imgui.PushStyleColor(imgui.StyleColorText, pallete[int(b)])
+			imgui.PushStyleColor(imgui.StyleColorText, palette[int(b)])
 		}
 		imgui.Text(fmt.Sprintf("%02X",b))
 		if imgui.IsItemHovered() {
@@ -85,8 +85,8 @@ func Hexview(buffer *[]byte, columns int,start int, window int) {
 			resetHover = false
 		}
 		if  idx == blockEnd {
-			sl := (*buffer)[blockStart:blockEnd+1]
-			hexTooltip(sl)
+			//sl := (*buffer)[blockStart:blockEnd+1]
+			//hexTooltip(sl)
 
 		}
 		imgui.PopStyleColor()
@@ -100,7 +100,7 @@ func hexTooltip(b []byte) {
 
 	defer imgui.EndTooltip()
 	imgui.Text(fmt.Sprintf("l: %d",len(b)))
-	imgui.PushStyleColor(imgui.StyleColorText,pallete[255+4])
+	imgui.PushStyleColor(imgui.StyleColorText, palette[255+4])
 	imgui.Text("byte:")
 	imgui.SameLine()
 	imgui.Text(fmt.Sprintf("%d",int(b[len(b)-1])))
@@ -110,7 +110,7 @@ func hexTooltip(b []byte) {
 	imgui.Text(fmt.Sprintf("%08b",b[len(b)-1]))
 	imgui.PopStyleColor()
 	if len(b) >= 2 {
-		imgui.PushStyleColor(imgui.StyleColorText,pallete[255+3])
+		imgui.PushStyleColor(imgui.StyleColorText, palette[255+3])
 
 		w := b[len(b)-2:]
 		imgui.Text("word:")
@@ -120,13 +120,13 @@ func hexTooltip(b []byte) {
 		imgui.Text(fmt.Sprintf("`%q`", string(w)))
 		imgui.SameLine()
 		imgui.Text(fmt.Sprintf("%08b", w))
-			imgui.PopStyleColor()
+		imgui.PopStyleColor()
 
 	}
 
 	if len(b) >= 4 {
 		dw := b[len(b)-4:]
-		imgui.PushStyleColor(imgui.StyleColorText,pallete[255+2])
+		imgui.PushStyleColor(imgui.StyleColorText, palette[255+2])
 
 		imgui.Text("dword")
 		imgui.SameLine()
