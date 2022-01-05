@@ -28,21 +28,20 @@ type CPU struct {
 	// memory
 	Data []byte
 	// current work data
-	pc uint16
-	op func([]byte)
-	opId uint8
+	pc    uint16
+	op    func([]byte)
+	opId  uint8
 	opLen uint8
 	// instruction Decode map
-	id [256]func(param []byte)()
+	id [256]func(param []byte)
 	// instruction size map
-	is [256]uint8
+	is     [256]uint8
 	OpsCtr uint64
 }
 
-
-func InitCPU() (*CPU) {
+func InitCPU() *CPU {
 	cpu := CPU{
-		Data:  make([]byte, memSize),
+		Data: make([]byte, memSize),
 	}
 	cpu.InitializeInstructionDecoder()
 	return &cpu
@@ -50,10 +49,10 @@ func InitCPU() (*CPU) {
 
 func (c *CPU) InitializeInstructionDecoder() {
 	funcmap := []struct {
-		I uint8  // ID/Op
-		F  func(param []byte) // function
-		S  uint8              // size
-		C  uint               // cycles
+		I uint8              // ID/Op
+		F func(param []byte) // function
+		S uint8              // size
+		C uint               // cycles
 	}{
 		{I: 0x00, F: c.INOP, S: 1},
 		{I: 0x01, F: c.ILD_BC, S: 3},
@@ -73,12 +72,12 @@ func (c *CPU) InitializeInstructionDecoder() {
 		{I: 0x0f, F: c.IDEC_C, S: 1},
 		// ...
 		{I: 0x3c, F: c.IINC_A, S: 1},
-		{I: 0x3e, F: c.ILD_A_const,S: 2},
+		{I: 0x3e, F: c.ILD_A_const, S: 2},
 		// ...
-		{I: 0xc3,F: c.IJPXX,S:3},
+		{I: 0xc3, F: c.IJPXX, S: 3},
 		// ..
-		{I: 0xa8,F: c.IXOR_B,S:1},
-		{I: 0xa9,F: c.IXOR_C,S:1},
+		{I: 0xa8, F: c.IXOR_B, S: 1},
+		{I: 0xa9, F: c.IXOR_C, S: 1},
 	}
 	for _, op := range funcmap {
 		if c.id[op.I] != nil {
@@ -94,26 +93,23 @@ func (c *CPU) InitializeInstructionDecoder() {
 		if op == nil {
 			c.id[i] = c.INOP
 			c.is[i] = 1
-			fmt.Printf("filling %02x with NOP\n", i)
 		}
 	}
 }
 
 func (c *CPU) Step() {
 	c.pc = binary.BigEndian.Uint16(c.PC[:])
-	c.opId= c.Data[c.pc]
-	c.opLen = c.is[ c.opId ]
+	c.opId = c.Data[c.pc]
+	c.opLen = c.is[c.opId]
 	c.op = c.id[c.opId]
-	binary.BigEndian.PutUint16(c.PC[:],c.pc + uint16(c.opLen))
+	binary.BigEndian.PutUint16(c.PC[:], c.pc+uint16(c.opLen))
 	c.op(c.Data[(c.pc + 1):(c.pc + uint16(c.opLen))])
 	c.OpsCtr++
 
 }
 func (c *CPU) State() string {
-	return fmt.Sprintf("PC: %d, opid %02x size: %d \n",c.pc,c.opId,c.opLen)
+	return fmt.Sprintf("PC: %d, opid %02x size: %d \n", c.pc, c.opId, c.opLen)
 }
-
-
 
 // Flags:
 // | 7 |  S  |  Sign           | Set if the 2-complement value is negative (copy of MSB)
@@ -125,59 +121,58 @@ func (c *CPU) State() string {
 // | 1 |  N  | Subtract        | last op was subtraction
 // | 0 |  C  | Carry           | result did not fit in register
 
-
 func (c *CPU) GetF_S() bool {
-	return (c.AF[1] & (1<<7)) != 0
+	return (c.AF[1] & (1 << 7)) != 0
 }
 func (c *CPU) SetF_S(f bool) {
 	if f {
-		c.AF[1] = c.AF[1] | (1<<7)
+		c.AF[1] = c.AF[1] | (1 << 7)
 	} else {
-		c.AF[1] = c.AF[1] & (0xff -  1<<7)
+		c.AF[1] = c.AF[1] & (0xff - 1<<7)
 	}
 }
 
 func (c *CPU) GetF_Z() bool {
-	return (c.AF[1] & (1<<6)) != 0
+	return (c.AF[1] & (1 << 6)) != 0
 }
 func (c *CPU) SetF_Z(f bool) {
 	if f {
-		c.AF[1] = c.AF[1] | (1<<6)
+		c.AF[1] = c.AF[1] | (1 << 6)
 	} else {
-		c.AF[1] = c.AF[1] & (0xff -  1<<6)
+		c.AF[1] = c.AF[1] & (0xff - 1<<6)
 	}
 }
 
 func (c *CPU) GetF_H() bool {
-	return (c.AF[1] & (1<<4)) != 0
+	return (c.AF[1] & (1 << 4)) != 0
 }
 func (c *CPU) SetF_H(f bool) {
 	if f {
-		c.AF[1] = c.AF[1] | (1<<4)
+		c.AF[1] = c.AF[1] | (1 << 4)
 	} else {
-		c.AF[1] = c.AF[1] & (0xff -  1<<4)
+		c.AF[1] = c.AF[1] & (0xff - 1<<4)
 	}
 }
 
 func (c *CPU) GetF_PV() bool {
-	return (c.AF[1] & (1<<2)) != 0
+	return (c.AF[1] & (1 << 2)) != 0
 }
 func (c *CPU) SetF_PV(f bool) {
 	if f {
-		c.AF[1] = c.AF[1] | (1<<2)
+		c.AF[1] = c.AF[1] | (1 << 2)
 	} else {
-		c.AF[1] = c.AF[1] & (0xff -  1<<2)
+		c.AF[1] = c.AF[1] & (0xff - 1<<2)
 	}
 }
 
 func (c *CPU) GetF_N() bool {
-	return (c.AF[1] & (1<<1)) != 0
+	return (c.AF[1] & (1 << 1)) != 0
 }
 func (c *CPU) SetF_N(f bool) {
 	if f {
-		c.AF[1] = c.AF[1] | (1<<1)
+		c.AF[1] = c.AF[1] | (1 << 1)
 	} else {
-		c.AF[1] = c.AF[1] & (0xff -  1<<1)
+		c.AF[1] = c.AF[1] & (0xff - 1<<1)
 	}
 }
 
@@ -188,6 +183,6 @@ func (c *CPU) SetF_C(f bool) {
 	if f {
 		c.AF[1] = c.AF[1] | 1
 	} else {
-		c.AF[1] = c.AF[1] & (0xff -  1)
+		c.AF[1] = c.AF[1] & (0xff - 1)
 	}
 }
